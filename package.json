@@ -19,7 +19,7 @@
     "build": "vite build",
     "preview": "vite preview --port 3007",
     "test-db": "python -m http.server 3007 --directory demo",
-    "debug": "echo 'Opening database testing interface...' && python -m http.server 3007 --directory demo",
+    "debug": "echo 'Opening database testing interface...' && npx http-server demo -p 3007",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
