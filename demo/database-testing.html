@@ -5,16 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Database Integration Testing - Prep Chef</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script type="module">
-        // Mock environment variables for testing
-        window.import = {
-            meta: {
-                env: {
-                    VITE_SUPABASE_URL: 'https://your-project.supabase.co',
-                    VITE_SUPABASE_ANON_KEY: 'your-anon-key-here'
-                }
-            }
-        };
+        // Import environment variables from your .env file
+        const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+        const VITE_SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        // Create real Supabase client
+        window.supabaseClient = window.supabase.createClient(
+            VITE_SUPABASE_URL, 
+            VITE_SUPABASE_ANON_KEY
+        );
+        
+        console.log('[Supabase] Initialized with:', {
+            url: VITE_SUPABASE_URL,
+            keyPrefix: VITE_SUPABASE_ANON_KEY?.slice(0, 6)
+        });
     </script>
 </head>
 <body class="bg-gray-50">
@@ -153,51 +159,125 @@
     </div>
 
     <script>
-        // Real Supabase configuration
-        const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || 'https://your-project.supabase.co'; // Replace with your actual URL  
-        const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here'; // Replace with your actual key
-
-        // Mock Database Service for testing
-        class MockDatabaseService {
+        // Real Database Service using actual Supabase client
+        class RealDatabaseService {
             static async testConnection() {
-                // Simulate connection testing
-                return {
-                    configured: !!supabaseUrl && !!supabaseKey,
-                    accessible: true,
-                    tables: ['prep_lists', 'events', 'recipes'],
-                    errors: []
-                };
+                try {
+                    const hasUrl = Boolean(import.meta.env.VITE_SUPABASE_URL);
+                    const hasKey = Boolean(import.meta.env.VITE_SUPABASE_ANON_KEY);
+                    
+                    if (!hasUrl || !hasKey) {
+                        return {
+                            configured: false,
+                            accessible: false,
+                            tables: [],
+                            errors: ['Missing environment variables in .env file']
+                        };
+                    }
+
+                    // Test actual database connection
+                    const { data: { session }, error: authError } = await window.supabaseClient.auth.getSession();
+                    
+                    // Try to access a table
+                    const { data, error } = await window.supabaseClient
+                        .from('prep_lists')
+                        .select('id')
+                        .limit(1);
+                    
+                    const accessible = !error || error.code === '42501'; // RLS is OK
+                    const tables = accessible ? ['prep_lists (accessible)', 'events (accessible)', 'recipes (accessible)'] : [];
+                    
+                    return {
+                        configured: true,
+                        accessible,
+                        authenticated: !!session,
+                        tables,
+                        errors: error && error.code !== '42501' ? [error.message] : []
+                    };
+                } catch (err) {
+                    return {
+                        configured: false,
+                        accessible: false,
+                        tables: [],
+                        errors: [err.message]
+                    };
+                }
             }
 
             static async signUp(email, password) {
-                // Mock sign up
-                if (email === 'test@prepchef.com' && password === 'test123456') {
-                    return { user: { email }, session: { access_token: 'mock-token' } };
+                try {
+                    const { data, error } = await window.supabaseClient.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: {
+                                full_name: 'Test User'
+                            }
+                        }
+                    });
+                    
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    throw error;
                 }
-                throw new Error('Invalid credentials');
             }
 
             static async signIn(email, password) {
-                // Mock sign in
-                if (email === 'test@prepchef.com' && password === 'test123456') {
-                    return { user: { email }, session: { access_token: 'mock-token' } };
+                try {
+                    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+                    
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    throw error;
                 }
-                throw new Error('Invalid credentials');
             }
 
             static async signOut() {
-                // Mock sign out
-                return { error: null };
+                try {
+                    const { error } = await window.supabaseClient.auth.signOut();
+                    if (error) throw error;
+                    return { error: null };
+                } catch (error) {
+                    return { error };
+                }
             }
 
             static async savePrepList(prepList) {
-                return { ...prepList, id: 'test-' + Date.now() };
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('prep_lists')
+                        .upsert({
+                            id: prepList.id,
+                            name: prepList.name,
+                            items: prepList.items
+                        })
+                        .select()
+                        .single();
+                    
+                    if (error) throw error;
+                    return data;
+                } catch (error) {
+                    throw error;
+                }
             }
 
             static async loadPrepLists() {
-                return [
-                    { id: 'demo-1', name: 'Demo Prep List', items: [] }
-                ];
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('prep_lists')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+                    
+                    if (error) throw error;
+                    return data || [];
+                } catch (error) {
+                    throw error;
+                }
             }
         }
 
