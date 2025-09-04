@@ -201,7 +201,7 @@
         // Import Supabase and create a real database service
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
         
-        // Get environment variables or use fallback
+        // Get environment variables
         const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
         
