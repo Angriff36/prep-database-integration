@@ -210,7 +210,6 @@
             log('❌ Missing Supabase credentials in .env file', 'error');
             log('📝 Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file', 'warning');
             updateConnectionStatus('error', 'Missing environment variables');
-            return;
         }
         
         // Create Supabase client
@@ -741,18 +740,6 @@
                 performanceResults.innerHTML = `<div class="text-red-600 text-sm">Performance test failed: ${error.message}</div>`;
                 log(`❌ Performance tests failed: ${error.message}`, 'error');
             }
-        }
-                ];
-                
-                performanceResults.innerHTML = results.map(result => `
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-700">${result.operation}:</span>
-                        <span class="text-green-600 font-medium">${result.time}</span>
-                    </div>
-                `).join('');
-                
-                log('✅ Performance tests completed', 'success');
-            }, 3000);
         }
 
         function clearConsole() {
