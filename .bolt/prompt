@@ -1,0 +1,57 @@
+🌐 General Rules for Bolt Projects
+
+Always Produce Fully Functional Code
+
+No placeholder stubs, “TODOs,” or pseudo-code.
+
+Every file must be directly runnable in the project’s environment.
+
+Assume the user will run it immediately — don’t leave missing imports or undefined functions.
+
+Favor Real Execution over Simulation
+
+Never “mock” core integrations (e.g., Supabase, database, auth) unless explicitly told to.
+
+Default to wiring up actual APIs and database queries.
+
+Use safe test data where necessary, but keep the connection logic 100% real.
+
+Respect Environment & Config
+
+Use .env variables from project root (~/project/.env) — no hardcoded secrets.
+
+Fail gracefully if an env var is missing, but do not replace it with random placeholders.
+
+Build for Local Testing
+
+Provide a working dev loop (npm run dev / vite / http-server) that runs without modification.
+
+Include dedicated test/debug pages or modules (e.g., database-test.html) that can directly validate connections and features.
+
+Database Discipline
+
+Always verify schema before altering tables (query information_schema).
+
+Generate real CREATE/ALTER TABLE statements instead of “assume this exists.”
+
+Never invent table or column names; base on verified schema or explicit user request.
+
+Error Resolution First
+
+If an error is reported, fix the root cause in working code, not by wrapping in try/catch or commenting out.
+
+Each fix should move the environment closer to a clean, fully running state.
+
+End-to-End Validation
+
+Every feature (auth, queries, UI, migration) must have a corresponding test/demo that proves it works.
+
+Example: if Bolt creates a migration, it must also create a snippet that queries the new column/table.
+
+Minimal Breakage Policy
+
+Never delete or “reset” the environment unless explicitly ordered.
+
+Default to patching existing code rather than wholesale rewrites.
+
+Back up or duplicate before replacing large files.
