@@ -143,10 +143,10 @@
 
             <!-- Results Log -->
             <section>
-                        <button onclick="testEvents('load'); return false;" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-lg font-semibold">Operation Results</h2>
-                        <button onclick="testEvents('delete'); return false;" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                        <button onclick="clearLog(); return false;" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded text-sm transition-colors">
                             Clear Log
                         </button>
                     </div>
@@ -281,6 +281,9 @@
             }
         }
 
+        // Initialize the service
+        window.DatabaseService = window.RealDatabaseService;
+
         // Authentication helpers
         async function testSignUp() {
             const email = document.getElementById('signin-email').value;
@@ -294,7 +297,7 @@
             log(`👤 Creating test user: ${email}`, 'info');
             
             try {
-                await window.MockDatabaseService.signUp(email, password);
+                await window.DatabaseService.signUp(email, password);
                 log('✅ Test user created and signed in!', 'success');
                 updateAuthUI(true, email);
                 
@@ -323,7 +326,7 @@
             log(`🔐 Signing in: ${email}`, 'info');
             
             try {
-                await window.MockDatabaseService.signIn(email, password);
+                await window.DatabaseService.signIn(email, password);
                 log('✅ Signed in successfully!', 'success');
                 updateAuthUI(true, email);
                 
@@ -339,7 +342,7 @@
             log('🚪 Signing out...', 'info');
             
             try {
-                await window.MockDatabaseService.signOut();
+                await window.DatabaseService.signOut();
                 log('✅ Signed out successfully!', 'success');
                 updateAuthUI(false);
                 
@@ -378,10 +381,10 @@
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="createTestData(); return false;" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                            <button onclick="testSignIn(); return false;" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors">
                                 Sign In
                             </button>
-                            <button onclick="cleanupTestData(); return false;" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                            <button onclick="testSignUp(); return false;" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors">
                                 Create User
                             </button>
                         </div>
@@ -412,7 +415,7 @@
             log('🔄 Testing database connection...', 'info');
             
             try {
-                const diagnosis = await MockDatabaseService.testConnection();
+                const diagnosis = await window.DatabaseService.testConnection();
                 
                 // Update UI
                 updateConnectionStatus('config-status', diagnosis.configured, 'Configuration');
@@ -476,12 +479,12 @@
                                 { id: '1', name: 'Test Item', quantity: '5', unit: 'lbs' }
                             ]
                         };
-                        const saved = await MockDatabaseService.savePrepList(newList);
+                        const saved = await window.DatabaseService.savePrepList(newList);
                         log(`✅ Created prep list: ${saved.name}`, 'success');
                         break;
                         
                     case 'load':
-                        const lists = await MockDatabaseService.loadPrepLists();
+                        const lists = await window.DatabaseService.loadPrepLists();
                         log(`✅ Loaded ${lists.length} prep lists`, 'success');
                         lists.forEach(list => log(`  📋 ${list.name}`, 'info'));
                         break;
