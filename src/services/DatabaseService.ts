@@ -2,13 +2,11 @@ import { supabase } from '../supabase';
 
 interface UserProfile {
   id: string;
+  user_id: string;
   email: string;
-  full_name?: string;
+  display_name?: string;
   company_id?: string;
-  role: 'user' | 'admin' | 'owner';
-  avatar_url?: string;
   created_at?: string;
-  updated_at?: string;
 }
 
 interface PrepItem {
@@ -133,7 +131,7 @@ export class DatabaseService {
       const { data: existingProfile, error: fetchError } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', this.currentUser.id)
+        .eq('user_id', this.currentUser.id)
         .single();
 
       if (existingProfile && !fetchError) {
@@ -143,15 +141,14 @@ export class DatabaseService {
 
       // If no profile exists, create one
       const newProfile = {
-        id: this.currentUser.id,
+        user_id: this.currentUser.id,
         email: this.currentUser.email,
-        full_name: this.currentUser.user_metadata?.full_name || null,
-        role: 'user' as const
+        display_name: this.currentUser.user_metadata?.full_name || null
       };
 
       const { data: createdProfile, error: createError } = await supabase
         .from('user_profiles')
-        .upsert(newProfile, { onConflict: 'id' })
+        .upsert(newProfile, { onConflict: 'user_id' })
         .select()
         .single();
 
@@ -277,18 +274,13 @@ export class DatabaseService {
         throw new Error('Prep list must have a valid ID and name');
       }
 
-      // Ensure user is authenticated
-      if (!this.currentUser) {
-        throw new Error('Authentication required to save prep lists');
-      }
-
       // Sanitize data
       const sanitizedList = {
         id: prepList.id,
         name: prepList.name.trim(),
         items: Array.isArray(prepList.items) ? prepList.items : [],
         company_id: prepList.company_id || null,
-        user_id: this.currentUser.id
+        user_id: this.currentUser?.id || null
       };
 
       const { data, error } = await supabase
@@ -316,10 +308,6 @@ export class DatabaseService {
 
   static async loadPrepLists(): Promise<PrepList[]> {
     return this.executeWithErrorHandling('loadPrepLists', async () => {
-      if (!this.currentUser) {
-        console.warn('[DatabaseService] Loading prep lists without authentication - may return empty results due to RLS');
-      }
-
       const { data, error } = await supabase
         .from('prep_lists')
         .select('*')
@@ -365,11 +353,6 @@ export class DatabaseService {
         throw new Error('Event must have valid ID, name, and date');
       }
 
-      // Ensure user is authenticated
-      if (!this.currentUser) {
-        throw new Error('Authentication required to save events');
-      }
-
       const sanitizedEvent = {
         id: event.id,
         name: event.name.trim(),
@@ -379,7 +362,7 @@ export class DatabaseService {
         status: event.status || 'planning',
         total_servings: Number(event.totalServings) || 0,
         company_id: event.company_id || null,
-        user_id: this.currentUser.id
+        user_id: this.currentUser?.id || null
       };
 
       const { data, error } = await supabase
@@ -411,10 +394,6 @@ export class DatabaseService {
 
   static async loadEvents(): Promise<Event[]> {
     return this.executeWithErrorHandling('loadEvents', async () => {
-      if (!this.currentUser) {
-        console.warn('[DatabaseService] Loading events without authentication - may return empty results due to RLS');
-      }
-
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -447,11 +426,6 @@ export class DatabaseService {
         throw new Error('Recipe must have valid ID and name');
       }
 
-      // Ensure user is authenticated
-      if (!this.currentUser) {
-        throw new Error('Authentication required to save recipes');
-      }
-
       const sanitizedRecipe = {
         id: recipe.id,
         name: recipe.name.trim(),
@@ -467,7 +441,7 @@ export class DatabaseService {
         notes: recipe.notes?.trim() || null,
         image: recipe.image?.trim() || null,
         company_id: recipe.company_id || null,
-        user_id: this.currentUser.id
+        user_id: this.currentUser?.id || null
       };
 
       const { data, error } = await supabase
@@ -505,10 +479,6 @@ export class DatabaseService {
 
   static async loadRecipes(): Promise<Recipe[]> {
     return this.executeWithErrorHandling('loadRecipes', async () => {
-      if (!this.currentUser) {
-        console.warn('[DatabaseService] Loading recipes without authentication - may return empty results due to RLS');
-      }
-
       const { data, error } = await supabase
         .from('recipes')
         .select('*')
@@ -547,10 +517,6 @@ export class DatabaseService {
         throw new Error('Method must have valid ID and name');
       }
 
-      if (!this.currentUser) {
-        throw new Error('Authentication required to save methods');
-      }
-
       const sanitizedMethod = {
         id: method.id,
         name: method.name.trim(),
@@ -564,7 +530,7 @@ export class DatabaseService {
         equipment: Array.isArray(method.equipment) ? method.equipment : [],
         tips: Array.isArray(method.tips) ? method.tips : [],
         company_id: method.company_id || null,
-        user_id: this.currentUser.id
+        user_id: this.currentUser?.id || null
       };
 
       const { data, error } = await supabase
@@ -596,10 +562,6 @@ export class DatabaseService {
 
   static async loadMethods(): Promise<Method[]> {
     return this.executeWithErrorHandling('loadMethods', async () => {
-      if (!this.currentUser) {
-        console.warn('[DatabaseService] Loading methods without authentication - may return empty results due to RLS');
-      }
-
       const { data, error } = await supabase
         .from('methods')
         .select('*')
@@ -877,11 +839,10 @@ export class DatabaseService {
       const { data, error } = await supabase
         .from('user_profiles')
         .update({
-          full_name: updates.full_name,
+          display_name: updates.display_name,
           company_id: updates.company_id,
-          avatar_url: updates.avatar_url
         })
-        .eq('id', this.currentUser.id)
+        .eq('user_id', this.currentUser.id)
         .select()
         .single();
 
@@ -1123,8 +1084,9 @@ export class DatabaseService {
           .from('containers')
           .insert({
             id: container.id,
-            name: container.name,
-            type: container.type,
+                description: container.size,
+                user_id: this.currentUser?.id,
+                company_id: container.company_id
             size: container.size,
             user_id: this.currentUser?.id
           });
