@@ -31,6 +31,28 @@
             <section class="mb-8">
                 <div class="bg-white rounded-lg border border-gray-200 p-6">
                     <h2 class="text-lg font-semibold mb-4">🔧 Environment Status</h2>
+                    
+                    <!-- Manual Credential Input -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <h3 class="font-medium text-blue-900 mb-3">📝 Manual Configuration</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Supabase URL</label>
+                                <input type="url" id="manual-url" placeholder="https://your-project.supabase.co" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Anon Key</label>
+                                <input type="text" id="manual-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            </div>
+                        </div>
+                        <button onclick="updateCredentials(); return false;" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition-colors">
+                            🔄 Update Credentials
+                        </button>
+                    </div>
+                    
                     <div id="env-info" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div class="bg-gray-50 p-4 rounded">
                             <h3 class="font-medium text-gray-900 mb-2">Supabase URL</h3>
@@ -149,6 +171,7 @@
         
         // Import Supabase
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+        window.supabaseModule = { createClient }; // Store for later use
         
         // Create real Supabase client with your credentials
         let supabase = null;
@@ -195,6 +218,36 @@
             
             log('✅ Using working Supabase connection (authentication successful)', 'success');
             log('💡 Environment variables may need configuration, but connection is functional', 'info');
+        };
+
+        // Update credentials function
+        window.updateCredentials = function() {
+            const urlInput = document.getElementById('manual-url');
+            const keyInput = document.getElementById('manual-key');
+            
+            const newUrl = urlInput.value.trim();
+            const newKey = keyInput.value.trim();
+            
+            if (!newUrl || !newKey) {
+                log('❌ Please provide both URL and key', 'error');
+                return;
+            }
+            
+            try {
+                // Create new Supabase client with provided credentials
+                const { createClient } = supabaseModule;
+                supabase = createClient(newUrl, newKey);
+                
+                log('✅ Credentials updated successfully!', 'success');
+                log(`   URL: ${newUrl}`, 'info');
+                log(`   Key: ${newKey.slice(0, 20)}...`, 'info');
+                
+                // Update environment status
+                window.checkEnvironment();
+                
+            } catch (error) {
+                log(`❌ Failed to update credentials: ${error.message}`, 'error');
+            }
         };
 
         // Connection test
