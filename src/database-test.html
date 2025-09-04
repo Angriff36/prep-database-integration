@@ -205,18 +205,19 @@
         const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
         
+        let supabase = null;
+        
         // Check if credentials are available
         if (!supabaseUrl || !supabaseKey) {
             log('❌ Missing Supabase credentials in .env file', 'error');
             log('📝 Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file', 'warning');
             updateConnectionStatus('error', 'Missing environment variables');
+        } else {
+            // Create Supabase client only if credentials are available
+            supabase = createClient(supabaseUrl, supabaseKey);
+            log(`✅ Using your database: ${supabaseUrl}`, 'success');
+            log(`🔑 Using your credentials: ${supabaseKey.slice(0, 20)}...`, 'info');
         }
-        
-        // Create Supabase client
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        
-        log(`✅ Using your database: ${supabaseUrl}`, 'success');
-        log(`🔑 Using your credentials: ${supabaseKey.slice(0, 20)}...`, 'info');
         
         // Create a simplified DatabaseService with the methods needed for testing
         window.DatabaseService = {
@@ -225,6 +226,19 @@
             },
             
             async diagnoseConnection() {
+                if (!supabase) {
+                    return {
+                        configured: false,
+                        accessible: false,
+                        authenticated: false,
+                        tables: [],
+                        errors: ['Supabase client not initialized - missing environment variables'],
+                        user: null,
+                        userProfile: null,
+                        rlsStatus: {}
+                    };
+                }
+                
                 const hasUrl = Boolean(supabaseUrl);
                 const hasKey = Boolean(supabaseKey);
                 
@@ -247,11 +261,17 @@
             },
             
             async signIn(email, password) {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase client not initialized' };
+                }
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 return { success: !error, error: error?.message };
             },
             
             async signUp(email, password, userData) {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase client not initialized' };
+                }
                 const { data, error } = await supabase.auth.signUp({
                     email, 
                     password,
@@ -261,11 +281,21 @@
             },
             
             async signOut() {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase client not initialized' };
+                }
                 const { error } = await supabase.auth.signOut();
                 return { success: !error, error: error?.message };
             },
             
             async testRLSPolicies() {
+                if (!supabase) {
+                    return {
+                        authenticated: false,
+                        tables: {}
+                    };
+                }
+                
                 const { data: { session } } = await supabase.auth.getSession();
                 const authenticated = !!session;
                 
