@@ -1,0 +1,46 @@
+{
+  "name": "@prep-chef/database-integration",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "demo"
+  ],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "preview": "vite preview --port 3007",
+    "test-db": "python -m http.server 3007 --directory demo",
+    "debug": "echo 'Opening database testing interface...' && python -m http.server 3007 --directory demo",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "peerDependencies": {
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3",
+    "vite": "^5.4.2",
+    "@types/react": "^18.3.5"
+  },
+  "keywords": [
+    "database",
+    "supabase",
+    "debugging",
+    "testing",
+    "kitchen-management",
+    "prep-chef"
+  ],
+  "description": "Database integration and debugging utilities for Prep Chef - Perfect for isolating database issues"
+}
