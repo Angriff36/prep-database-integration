@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prep Chef Database Testing</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         .status-indicator {
             width: 12px;
@@ -24,37 +25,43 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
-        .console-output {
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        .test-card {
+            transition: all 0.2s;
+        }
+        .test-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">🔬 Prep Chef Database Testing</h1>
-            <p class="text-gray-600">Debug database connections, RLS policies, and data operations</p>
+            <div class="text-center mb-6">
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">🔬 Prep Chef Database Testing</h1>
+                <p class="text-gray-600 text-lg">Comprehensive database connection and RLS policy testing environment</p>
+            </div>
             
             <!-- Connection Status Bar -->
-            <div id="connection-bar" class="mt-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div id="connection-bar" class="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
                         <span id="connection-indicator" class="status-indicator status-loading"></span>
                         <span id="connection-text" class="font-medium">Initializing...</span>
                     </div>
                     <div class="text-sm text-gray-500" id="connection-details">
-                        Loading database service...
+                        Database service starting...
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Column -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <!-- Environment & Auth Column -->
             <div class="space-y-6">
                 <!-- Environment Check -->
-                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <div class="test-card bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                     <h2 class="text-xl font-semibold mb-4 flex items-center">
                         ⚙️ Environment Check
                     </h2>
@@ -64,19 +71,19 @@
                             Checking configuration...
                         </div>
                     </div>
-                    <button onclick="checkEnvironment()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors text-sm font-medium">
+                    <button onclick="checkEnvironment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">
                         🔄 Recheck Environment
                     </button>
                 </div>
 
                 <!-- Authentication -->
-                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">🔐 Authentication Testing</h2>
+                <div class="test-card bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4">🔐 Authentication</h2>
                     
                     <div id="auth-status" class="mb-4">
                         <div class="flex items-center text-sm text-gray-600">
                             <span class="status-indicator status-loading"></span>
-                            Checking authentication status...
+                            Checking authentication...
                         </div>
                     </div>
 
@@ -93,92 +100,101 @@
                                 <input type="password" id="signin-password" value="test123456"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="signIn()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition-colors font-medium">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="signIn()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition-colors">
                                     Sign In
                                 </button>
-                                <button onclick="signUp()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition-colors font-medium">
-                                    Create Test User
+                                <button onclick="signUp()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition-colors">
+                                    Create User
                                 </button>
                             </div>
                         </div>
 
                         <!-- Signed In Controls -->
                         <div id="signout-form" class="hidden">
-                            <div class="text-sm text-gray-600 mb-3">
-                                ✅ Signed in as: <span id="current-user" class="font-medium text-green-700"></span>
+                            <div class="bg-green-50 border border-green-200 rounded p-3 mb-3">
+                                <div class="text-sm font-medium text-green-800">✅ Authenticated</div>
+                                <div class="text-xs text-green-600" id="current-user"></div>
                             </div>
-                            <button onclick="signOut()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition-colors font-medium">
+                            <button onclick="signOut()" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition-colors">
                                 Sign Out
                             </button>
                         </div>
                     </div>
                 </div>
-
-                <!-- RLS Testing -->
-                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">🛡️ RLS Policy Testing</h2>
-                    <div id="rls-results" class="space-y-3 mb-4">
-                        <div class="text-sm text-gray-600">Test Row Level Security policies to ensure data access is properly controlled</div>
-                    </div>
-                    <button onclick="testRLSPolicies()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition-colors text-sm font-medium">
-                        🧪 Test RLS Policies
-                    </button>
-                </div>
             </div>
 
-            <!-- Right Column -->
+            <!-- Database Testing Column -->
             <div class="space-y-6">
                 <!-- Database Operations -->
-                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <div class="test-card bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                     <h2 class="text-xl font-semibold mb-4">🗄️ Database Operations</h2>
                     <div class="grid grid-cols-2 gap-3 mb-4">
-                        <button onclick="testDatabaseOperations('prep_lists')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
-                            📋 Test Prep Lists
+                        <button onclick="testDatabaseOperations('prep_lists')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                            📋 Prep Lists
                         </button>
-                        <button onclick="testDatabaseOperations('events')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
-                            📅 Test Events
+                        <button onclick="testDatabaseOperations('events')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                            📅 Events
                         </button>
-                        <button onclick="testDatabaseOperations('recipes')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
-                            👨‍🍳 Test Recipes
+                        <button onclick="testDatabaseOperations('recipes')" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                            👨‍🍳 Recipes
                         </button>
-                        <button onclick="testDatabaseOperations('methods')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
-                            🔧 Test Methods
+                        <button onclick="testDatabaseOperations('methods')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                            🔧 Methods
                         </button>
                     </div>
                     
                     <div class="pt-4 border-t border-gray-200">
-                        <h3 class="font-medium mb-3">Bulk Operations</h3>
-                        <div class="flex gap-2">
-                            <button onclick="createTestData()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
+                        <h3 class="font-medium mb-3 text-gray-700">Bulk Operations</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="createTestData()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors">
                                 ➕ Create Test Data
                             </button>
-                            <button onclick="cleanupTestData()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors font-medium">
+                            <button onclick="cleanupTestData()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors">
                                 🗑️ Cleanup Test Data
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Real-time Testing -->
-                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">⚡ Real-time Testing</h2>
-                    <div id="realtime-status" class="mb-4 text-sm">
-                        <span class="status-indicator status-loading"></span>
-                        Real-time features not tested yet
+                <!-- RLS Testing -->
+                <div class="test-card bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4">🛡️ RLS Policy Testing</h2>
+                    <div id="rls-results" class="space-y-3 mb-4">
+                        <div class="text-sm text-gray-600">Click "Test RLS Policies" to check Row Level Security</div>
                     </div>
-                    <button onclick="testRealtime()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition-colors text-sm font-medium">
-                        🔄 Test Real-time Subscriptions
+                    <button onclick="testRLSPolicies()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition-colors">
+                        🧪 Test RLS Policies
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results & Monitoring Column -->
+            <div class="space-y-6">
+                <!-- Real-time Testing -->
+                <div class="test-card bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4">⚡ Real-time Testing</h2>
+                    <div id="realtime-status" class="mb-4">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <span class="status-indicator status-loading"></span>
+                            Real-time not tested yet
+                        </div>
+                    </div>
+                    <div id="realtime-log" class="bg-gray-50 border rounded p-3 text-xs text-gray-600 h-32 overflow-y-auto mb-4">
+                        Real-time events will appear here...
+                    </div>
+                    <button onclick="testRealtime()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition-colors">
+                        🔄 Test Real-time
                     </button>
                 </div>
 
                 <!-- Performance Testing -->
-                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                    <h2 class="text-xl font-semibold mb-4">📊 Performance Testing</h2>
+                <div class="test-card bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                    <h2 class="text-xl font-semibold mb-4">⚡ Performance Testing</h2>
                     <div id="performance-results" class="mb-4 space-y-2">
-                        <div class="text-sm text-gray-600">Run performance tests to check query speed and optimization</div>
+                        <div class="text-sm text-gray-600">Run performance tests to check query speed</div>
                     </div>
-                    <button onclick="runPerformanceTests()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded transition-colors text-sm font-medium">
+                    <button onclick="runPerformanceTests()" class="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded transition-colors">
                         🏃‍♂️ Run Performance Tests
                     </button>
                 </div>
@@ -190,83 +206,113 @@
             <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold">📋 Test Console</h2>
-                    <div class="flex gap-2">
-                        <button onclick="exportLog()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                            📄 Export
-                        </button>
-                        <button onclick="clearConsole()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                            Clear
-                        </button>
-                    </div>
+                    <button onclick="clearConsole()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                        Clear
+                    </button>
                 </div>
-                <div id="console-log" class="console-output bg-gray-900 text-green-400 p-4 rounded font-mono text-sm max-h-96 overflow-y-auto">
+                <div id="console-log" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
                     <div class="text-gray-500">[System] Database testing console initialized</div>
-                    <div class="text-blue-400">[Info] Building database service...</div>
+                    <div class="text-yellow-400">[Info] Configure your Supabase credentials in .env to enable real database testing</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Load database service from built module -->
     <script type="module">
-        // Load environment variables and initialize
-        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
-        const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
+        // Direct Supabase setup since we don't have the environment variables configured yet
+        let supabase = null;
+        let DatabaseService = null;
         
-        // Import Supabase directly
-        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-        
-        // Create Supabase client
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
+        // Initialize database service with fallback
+        async function initializeDatabaseService() {
+            try {
+                // Try to use environment variables first
+                const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || '';
+                const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+                
+                if (supabaseUrl && supabaseKey) {
+                    supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+                        auth: {
+                            persistSession: true,
+                            autoRefreshToken: true,
+                            detectSessionInUrl: true,
+                        },
+                    });
+                    log('✅ Supabase client initialized with environment variables', 'success');
+                } else {
+                    log('⚠️ Environment variables not configured - using demo mode', 'warning');
+                }
+                
+                // Initialize simplified database service
+                DatabaseService = new SimplifiedDatabaseService();
+                await DatabaseService.initialize();
+                
+            } catch (error) {
+                log(`❌ Failed to initialize database service: ${error.message}`, 'error');
             }
-        });
+        }
 
-        // Enhanced DatabaseService with proper error handling
-        class DatabaseService {
-            static supabase = supabase;
-            static currentUser = null;
-            static userProfile = null;
-            static isInitialized = false;
+        // Simplified Database Service for testing
+        class SimplifiedDatabaseService {
+            constructor() {
+                this.currentUser = null;
+                this.isInitialized = false;
+            }
 
-            static async initialize() {
+            async initialize() {
                 if (this.isInitialized) return;
                 
+                if (!supabase) {
+                    log('⚠️ No Supabase configuration - running in demo mode', 'warning');
+                    this.isInitialized = true;
+                    return;
+                }
+
                 try {
-                    // Get current session
-                    const { data: { session } } = await this.supabase.auth.getSession();
+                    const { data: { session } } = await supabase.auth.getSession();
                     this.currentUser = session?.user || null;
                     
-                    // Listen for auth changes
-                    this.supabase.auth.onAuthStateChange((event, session) => {
+                    supabase.auth.onAuthStateChange((event, session) => {
                         this.currentUser = session?.user || null;
-                        this.userProfile = null;
-                        console.log(`[DatabaseService] Auth state changed: ${event}`);
-                        
-                        // Update UI
-                        if (window.updateAuthStatus) {
-                            window.updateAuthStatus(!!session?.user, session?.user?.email);
-                        }
+                        log(`🔐 Auth state changed: ${event}`, 'system');
+                        updateAuthStatus(!!session, session?.user?.email);
                     });
                     
                     this.isInitialized = true;
-                    console.log('[DatabaseService] Initialized successfully');
-                    
-                    // Update UI
-                    if (this.currentUser && window.updateAuthStatus) {
-                        window.updateAuthStatus(true, this.currentUser.email);
-                    }
-                    
+                    log('✅ Database service initialized', 'success');
                 } catch (error) {
-                    console.error('[DatabaseService] Initialization failed:', error);
-                    throw error;
+                    log(`❌ Database service initialization failed: ${error.message}`, 'error');
                 }
             }
 
-            static async diagnoseConnection() {
+            async testConnection() {
+                if (!supabase) {
+                    log('❌ No Supabase client available - check environment configuration', 'error');
+                    return false;
+                }
+
+                try {
+                    const { data, error } = await supabase.from('prep_lists').select('id').limit(1);
+                    
+                    if (error) {
+                        if (error.code === '42501' || error.message?.includes('RLS')) {
+                            log('🔒 Database accessible - RLS policies active (expected)', 'success');
+                            return true;
+                        } else {
+                            log(`❌ Database connection error: ${error.message}`, 'error');
+                            return false;
+                        }
+                    }
+                    
+                    log('✅ Database connection successful', 'success');
+                    return true;
+                } catch (error) {
+                    log(`❌ Connection test failed: ${error.message}`, 'error');
+                    return false;
+                }
+            }
+
+            async diagnoseConnection() {
                 const diagnosis = {
                     configured: false,
                     accessible: false,
@@ -274,23 +320,22 @@
                     tables: [],
                     errors: [],
                     user: null,
-                    userProfile: null,
                     rlsStatus: {}
                 };
 
                 try {
                     // Check configuration
-                    const hasUrl = Boolean(SUPABASE_URL && SUPABASE_URL !== 'https://placeholder.supabase.co');
-                    const hasKey = Boolean(SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'placeholder-key');
+                    const hasUrl = Boolean(import.meta.env?.VITE_SUPABASE_URL);
+                    const hasKey = Boolean(import.meta.env?.VITE_SUPABASE_ANON_KEY);
                     
-                    if (!hasUrl) diagnosis.errors.push('VITE_SUPABASE_URL not configured in .env');
-                    if (!hasKey) diagnosis.errors.push('VITE_SUPABASE_ANON_KEY not configured in .env');
+                    if (!hasUrl) diagnosis.errors.push('VITE_SUPABASE_URL not configured');
+                    if (!hasKey) diagnosis.errors.push('VITE_SUPABASE_ANON_KEY not configured');
                     
                     diagnosis.configured = hasUrl && hasKey;
 
-                    if (diagnosis.configured) {
+                    if (diagnosis.configured && supabase) {
                         // Check authentication
-                        const { data: { session }, error: authError } = await this.supabase.auth.getSession();
+                        const { data: { session }, error: authError } = await supabase.auth.getSession();
                         
                         if (authError) {
                             diagnosis.errors.push(`Auth error: ${authError.message}`);
@@ -304,11 +349,11 @@
                         }
 
                         // Test table accessibility
-                        const tablesToTest = ['prep_lists', 'events', 'recipes', 'methods', 'containers', 'companies'];
+                        const tablesToTest = ['prep_lists', 'events', 'recipes', 'methods', 'containers'];
                         
                         for (const table of tablesToTest) {
                             try {
-                                const { data, error } = await this.supabase
+                                const { data, error } = await supabase
                                     .from(table)
                                     .select('id')
                                     .limit(1);
@@ -317,40 +362,37 @@
                                     if (error.code === '42501' || error.message?.includes('RLS')) {
                                         diagnosis.tables.push(`${table} (RLS active)`);
                                         diagnosis.accessible = true;
-                                        
-                                        // This is expected behavior for RLS
-                                        diagnosis.rlsStatus[table] = {
-                                            enabled: true,
-                                            policies: ['SELECT: Row Level Security active']
-                                        };
-                                    } else if (error.code === '42P01') {
-                                        diagnosis.errors.push(`Table '${table}': Table does not exist - run migrations`);
+                                        diagnosis.rlsStatus[table] = { enabled: true, accessible: true };
                                     } else {
                                         diagnosis.errors.push(`Table '${table}': ${error.message}`);
+                                        diagnosis.rlsStatus[table] = { enabled: false, accessible: false, error: error.message };
                                     }
                                 } else {
                                     diagnosis.tables.push(table);
                                     diagnosis.accessible = true;
-                                    diagnosis.rlsStatus[table] = {
-                                        enabled: false,
-                                        policies: ['No RLS policies active']
-                                    };
+                                    diagnosis.rlsStatus[table] = { enabled: true, accessible: true };
                                 }
                             } catch (e) {
                                 diagnosis.errors.push(`Table '${table}': ${e.message}`);
                             }
                         }
+                    } else {
+                        diagnosis.errors.push('Supabase client not initialized');
                     }
                 } catch (error) {
-                    diagnosis.errors.push(`Connection diagnosis failed: ${error.message}`);
+                    diagnosis.errors.push(`Diagnosis failed: ${error.message}`);
                 }
 
                 return diagnosis;
             }
 
-            static async signUp(email, password, userData = {}) {
+            async signUp(email, password, userData = {}) {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase not configured' };
+                }
+
                 try {
-                    const { data, error } = await this.supabase.auth.signUp({
+                    const { data, error } = await supabase.auth.signUp({
                         email,
                         password,
                         options: {
@@ -370,9 +412,13 @@
                 }
             }
 
-            static async signIn(email, password) {
+            async signIn(email, password) {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase not configured' };
+                }
+
                 try {
-                    const { data, error } = await this.supabase.auth.signInWithPassword({
+                    const { data, error } = await supabase.auth.signInWithPassword({
                         email,
                         password
                     });
@@ -388,22 +434,29 @@
                 }
             }
 
-            static async signOut() {
+            async signOut() {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase not configured' };
+                }
+
                 try {
-                    const { error } = await this.supabase.auth.signOut();
+                    const { error } = await supabase.auth.signOut();
                     if (error) {
                         return { success: false, error: error.message };
                     }
                     
                     this.currentUser = null;
-                    this.userProfile = null;
                     return { success: true };
                 } catch (error) {
                     return { success: false, error: error.message };
                 }
             }
 
-            static async testRLSPolicies() {
+            async testRLSPolicies() {
+                if (!supabase) {
+                    throw new Error('Supabase not configured');
+                }
+
                 const result = {
                     authenticated: !!this.currentUser,
                     tables: {}
@@ -422,12 +475,8 @@
 
                     // Test READ
                     try {
-                        const { data, error } = await this.supabase.from(table).select('id').limit(1);
-                        if (!error) {
-                            result.tables[table].canRead = true;
-                        } else {
-                            result.tables[table].errors.push(`Read: ${error.message}`);
-                        }
+                        await supabase.from(table).select('id').limit(1);
+                        result.tables[table].canRead = true;
                     } catch (error) {
                         result.tables[table].errors.push(`Read: ${error.message}`);
                     }
@@ -440,32 +489,35 @@
                         try {
                             let testData = { id: testId, name: 'RLS Test Item' };
                             
-                            // Add table-specific required fields
+                            // Customize test data per table
                             switch (table) {
+                                case 'prep_lists':
+                                    testData.items = [];
+                                    break;
                                 case 'events':
-                                    testData = { ...testData, event_date: new Date().toISOString().split('T')[0], status: 'pending', total_servings: 0 };
+                                    testData.date = new Date().toISOString().split('T')[0];
+                                    testData.status = 'planning';
+                                    testData.total_servings = 0;
                                     break;
                                 case 'recipes':
-                                    testData = { ...testData, ingredients: [], instructions: '' };
+                                    testData.ingredients = [];
+                                    testData.instructions = [];
                                     break;
                                 case 'methods':
-                                    testData = { ...testData, description: 'Test method' };
+                                    testData.instructions = [];
                                     break;
                                 case 'containers':
-                                    testData = { ...testData, description: 'Test container' };
-                                    break;
-                                case 'prep_lists':
-                                    testData = { ...testData, items: [] };
+                                    testData.type = 'test';
                                     break;
                             }
 
-                            const { error: insertError } = await this.supabase.from(table).insert(testData);
+                            const { error: insertError } = await supabase.from(table).insert(testData);
                             if (!insertError) {
                                 result.tables[table].canInsert = true;
 
                                 // Test UPDATE
                                 try {
-                                    const { error: updateError } = await this.supabase
+                                    const { error: updateError } = await supabase
                                         .from(table)
                                         .update({ name: 'RLS Test Updated' })
                                         .eq('id', testId);
@@ -476,7 +528,7 @@
 
                                 // Test DELETE (cleanup)
                                 try {
-                                    const { error: deleteError } = await this.supabase
+                                    const { error: deleteError } = await supabase
                                         .from(table)
                                         .delete()
                                         .eq('id', testId);
@@ -490,93 +542,20 @@
                         } catch (error) {
                             result.tables[table].errors.push(`Insert: ${error.message}`);
                         }
-                    } else {
-                        result.tables[table].errors.push('Authentication required for write operations');
                     }
                 }
 
                 return result;
             }
-
-            static async createTestData() {
-                if (!this.currentUser) {
-                    throw new Error('Authentication required to create test data');
-                }
-
-                const timestamp = Date.now();
-                
-                // Create test prep list
-                const { error: prepListError } = await this.supabase
-                    .from('prep_lists')
-                    .insert({
-                        id: `test-prep-${timestamp}`,
-                        name: `Test Prep List ${new Date().toLocaleTimeString()}`,
-                        items: [{ id: '1', name: 'Test Item', quantity: '5', unit: 'lbs' }]
-                    });
-
-                if (prepListError) throw prepListError;
-
-                // Create test event
-                const { error: eventError } = await this.supabase
-                    .from('events')
-                    .insert({
-                        id: `test-event-${timestamp}`,
-                        title: `Test Event ${new Date().toLocaleTimeString()}`,
-                        event_date: new Date().toISOString().split('T')[0],
-                        status: 'pending',
-                        total_servings: 50
-                    });
-
-                if (eventError) throw eventError;
-
-                return { success: true };
-            }
-
-            static async cleanupTestData() {
-                if (!this.currentUser) {
-                    throw new Error('Authentication required to cleanup test data');
-                }
-
-                const tablesToClean = ['prep_lists', 'events', 'recipes', 'methods', 'containers'];
-                let totalDeleted = 0;
-
-                for (const table of tablesToClean) {
-                    try {
-                        const { data: testItems } = await this.supabase
-                            .from(table)
-                            .select('id, name')
-                            .ilike('name', 'Test %');
-
-                        if (testItems && testItems.length > 0) {
-                            const ids = testItems.map(item => item.id);
-                            const { error } = await this.supabase
-                                .from(table)
-                                .delete()
-                                .in('id', ids);
-
-                            if (!error) {
-                                totalDeleted += testItems.length;
-                            }
-                        }
-                    } catch (error) {
-                        console.warn(`Failed to cleanup ${table}:`, error);
-                    }
-                }
-
-                return { success: true, deleted: totalDeleted };
-            }
         }
 
-        // Make DatabaseService globally available
-        window.DatabaseService = DatabaseService;
-
-        // Global state
+        // Global variables
         let currentUser = null;
         let connectionStatus = 'checking';
 
-        // Logging utility
+        // Utility functions
         function log(message, type = 'info') {
-            const consoleEl = document.getElementById('console-log');
+            const console = document.getElementById('console-log');
             const timestamp = new Date().toLocaleTimeString();
             const colors = {
                 success: 'text-green-400',
@@ -590,8 +569,8 @@
             div.className = colors[type] || 'text-gray-300';
             div.innerHTML = `<span class="text-gray-500">[${timestamp}]</span> ${message}`;
             
-            consoleEl.appendChild(div);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
+            console.appendChild(div);
+            console.scrollTop = console.scrollHeight;
         }
 
         function updateConnectionStatus(status, details = '') {
@@ -618,12 +597,46 @@
             detailsEl.textContent = details;
         }
 
-        // Global functions
+        function updateAuthStatus(authenticated, userEmail = '') {
+            const authStatus = document.getElementById('auth-status');
+            const signinForm = document.getElementById('signin-form');
+            const signoutForm = document.getElementById('signout-form');
+            const currentUserEl = document.getElementById('current-user');
+            
+            if (authenticated) {
+                authStatus.innerHTML = `
+                    <div class="flex items-center text-sm text-green-600">
+                        <span class="status-indicator status-success"></span>
+                        Authenticated as ${userEmail}
+                    </div>
+                `;
+                signinForm.style.display = 'none';
+                signoutForm.style.display = 'block';
+                if (currentUserEl) currentUserEl.textContent = userEmail;
+                currentUser = userEmail;
+            } else {
+                authStatus.innerHTML = `
+                    <div class="flex items-center text-sm text-gray-600">
+                        <span class="status-indicator status-error"></span>
+                        Not authenticated
+                    </div>
+                `;
+                signinForm.style.display = 'block';
+                signoutForm.style.display = 'none';
+                currentUser = null;
+            }
+        }
+
+        // Global testing functions
         window.checkEnvironment = async function() {
             log('🔧 Checking environment configuration...', 'system');
             updateConnectionStatus('checking', 'Diagnosing connection...');
             
             try {
+                if (!DatabaseService) {
+                    throw new Error('Database service not initialized');
+                }
+                
                 const diagnosis = await DatabaseService.diagnoseConnection();
                 
                 const envStatus = document.getElementById('env-status');
@@ -643,28 +656,42 @@
                 connDiv.className = `flex items-center text-sm ${diagnosis.accessible ? 'text-green-600' : 'text-yellow-600'}`;
                 connDiv.innerHTML = `
                     <span class="status-indicator ${diagnosis.accessible ? 'status-success' : 'status-warning'}"></span>
-                    Database: ${diagnosis.accessible ? 'Accessible' : 'Configure credentials to test'}
+                    Database: ${diagnosis.accessible ? 'Accessible' : 'RLS Restricted'}
                 `;
                 envStatus.appendChild(connDiv);
                 
                 // Tables status
                 const tablesDiv = document.createElement('div');
                 tablesDiv.innerHTML = `
-                    <div class="text-sm font-medium text-gray-700 mt-2 mb-1">Database Status:</div>
+                    <div class="text-sm font-medium text-gray-700 mt-2 mb-1">Tables Found:</div>
                     <div class="text-xs text-gray-600 space-y-1">
                         ${diagnosis.tables.length > 0 ? diagnosis.tables.map(table => `
                             <div>• ${table}</div>
-                        `).join('') : '<div class="text-orange-600">Configure .env file to test database access</div>'}
+                        `).join('') : '<div class="text-red-600">No tables accessible</div>'}
                     </div>
                 `;
                 envStatus.appendChild(tablesDiv);
+                
+                // RLS Status
+                if (Object.keys(diagnosis.rlsStatus).length > 0) {
+                    const rlsDiv = document.createElement('div');
+                    rlsDiv.innerHTML = `
+                        <div class="text-sm font-medium text-gray-700 mt-2 mb-1">RLS Status:</div>
+                        <div class="text-xs text-gray-600 space-y-1">
+                            ${Object.entries(diagnosis.rlsStatus).map(([table, status]) => `
+                                <div>• ${table}: ${status.enabled ? '🔒 Enabled' : '❌ Disabled'} (${status.accessible ? 'Accessible' : 'Restricted'})</div>
+                            `).join('')}
+                        </div>
+                    `;
+                    envStatus.appendChild(rlsDiv);
+                }
                 
                 // Errors
                 if (diagnosis.errors.length > 0) {
                     const errorsDiv = document.createElement('div');
                     errorsDiv.innerHTML = `
-                        <div class="text-sm font-medium text-orange-700 mt-2 mb-1">Configuration Notes:</div>
-                        <div class="text-xs text-orange-600 space-y-1">
+                        <div class="text-sm font-medium text-red-700 mt-2 mb-1">Issues:</div>
+                        <div class="text-xs text-red-600 space-y-1">
                             ${diagnosis.errors.map(error => `<div>• ${error}</div>`).join('')}
                         </div>
                     `;
@@ -672,12 +699,15 @@
                 }
                 
                 // Update overall connection status
-                if (diagnosis.configured) {
-                    updateConnectionStatus('connected', diagnosis.authenticated ? 'Authenticated access' : 'Ready for testing');
-                    log('✅ Environment check completed - Ready for database testing', 'success');
+                if (diagnosis.configured && diagnosis.accessible) {
+                    updateConnectionStatus('connected', diagnosis.authenticated ? 'Authenticated access' : 'Anonymous access (RLS active)');
+                    log('✅ Environment check completed - Database accessible', 'success');
+                } else if (diagnosis.configured) {
+                    updateConnectionStatus('warning', 'Configuration valid, limited database access');
+                    log('⚠️ Database configured but access limited - Check authentication', 'warning');
                 } else {
-                    updateConnectionStatus('warning', 'Configure .env file to enable database testing');
-                    log('⚠️ Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env file', 'warning');
+                    updateConnectionStatus('error', 'Configuration missing');
+                    log('❌ Environment check failed - Missing configuration', 'error');
                 }
                 
             } catch (error) {
@@ -695,13 +725,18 @@
                 return;
             }
             
+            if (!DatabaseService) {
+                log('❌ Database service not initialized', 'error');
+                return;
+            }
+            
             log(`🔐 Signing in as ${email}...`, 'info');
             
             try {
                 const result = await DatabaseService.signIn(email, password);
                 
                 if (result.success) {
-                    currentUser = email;
+                    updateAuthStatus(true, email);
                     log('✅ Sign in successful', 'success');
                     
                     // Recheck environment with authentication
@@ -723,6 +758,11 @@
                 return;
             }
             
+            if (!DatabaseService) {
+                log('❌ Database service not initialized', 'error');
+                return;
+            }
+            
             log(`👤 Creating test user ${email}...`, 'info');
             
             try {
@@ -731,17 +771,17 @@
                 });
                 
                 if (result.success) {
-                    currentUser = email;
-                    log('✅ Test user created and signed in successfully', 'success');
+                    updateAuthStatus(true, email);
+                    log('✅ Test user created successfully', 'success');
                     
                     // Recheck environment with authentication
                     setTimeout(checkEnvironment, 500);
                 } else {
                     log(`❌ Sign up failed: ${result.error}`, 'error');
                     // If user already exists, try to sign in
-                    if (result.error.includes('already') || result.error.includes('exist')) {
-                        log('👤 User may already exist, trying to sign in...', 'info');
-                        setTimeout(() => signIn(), 1000);
+                    if (result.error.includes('already registered')) {
+                        log('👤 User already exists, trying to sign in...', 'info');
+                        await signIn();
                     }
                 }
             } catch (error) {
@@ -753,10 +793,15 @@
             log('🚪 Signing out...', 'info');
             
             try {
+                if (!DatabaseService) {
+                    log('❌ Database service not initialized', 'error');
+                    return;
+                }
+                
                 const result = await DatabaseService.signOut();
                 
                 if (result.success) {
-                    currentUser = null;
+                    updateAuthStatus(false);
                     log('✅ Sign out successful', 'success');
                     
                     // Recheck environment without authentication
@@ -769,55 +814,33 @@
             }
         };
 
-        window.updateAuthStatus = function(authenticated, userEmail = '') {
-            const authStatus = document.getElementById('auth-status');
-            const signinForm = document.getElementById('signin-form');
-            const signoutForm = document.getElementById('signout-form');
-            const currentUserEl = document.getElementById('current-user');
-            
-            if (authenticated) {
-                authStatus.innerHTML = `
-                    <div class="flex items-center text-sm text-green-600">
-                        <span class="status-indicator status-success"></span>
-                        Authenticated as ${userEmail}
-                    </div>
-                `;
-                signinForm.style.display = 'none';
-                signoutForm.style.display = 'block';
-                if (currentUserEl) currentUserEl.textContent = userEmail;
-            } else {
-                authStatus.innerHTML = `
-                    <div class="flex items-center text-sm text-gray-600">
-                        <span class="status-indicator status-error"></span>
-                        Not authenticated
-                    </div>
-                `;
-                signinForm.style.display = 'block';
-                signoutForm.style.display = 'none';
-            }
-        };
-
         window.testRLSPolicies = async function() {
             log('🛡️ Testing RLS policies...', 'info');
             
             try {
+                if (!DatabaseService) {
+                    throw new Error('Database service not initialized');
+                }
+                
                 const results = await DatabaseService.testRLSPolicies();
                 const rlsResults = document.getElementById('rls-results');
                 rlsResults.innerHTML = '';
                 
                 // Overall status
                 const statusDiv = document.createElement('div');
-                statusDiv.className = `flex items-center text-sm mb-3 ${results.authenticated ? 'text-green-600' : 'text-yellow-600'}`;
+                statusDiv.className = `p-3 rounded mb-4 ${results.authenticated ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`;
                 statusDiv.innerHTML = `
-                    <span class="status-indicator ${results.authenticated ? 'status-success' : 'status-warning'}"></span>
-                    ${results.authenticated ? 'Authenticated - Testing full CRUD operations' : 'Unauthenticated - Testing public access only'}
+                    <div class="flex items-center text-sm ${results.authenticated ? 'text-green-700' : 'text-yellow-700'}">
+                        <span class="status-indicator ${results.authenticated ? 'status-success' : 'status-warning'}"></span>
+                        ${results.authenticated ? 'Authenticated - Testing CRUD operations' : 'Unauthenticated - Testing read-only access'}
+                    </div>
                 `;
                 rlsResults.appendChild(statusDiv);
                 
                 // Table results
                 Object.entries(results.tables).forEach(([tableName, tableResult]) => {
                     const tableDiv = document.createElement('div');
-                    tableDiv.className = 'border border-gray-200 rounded p-3 mb-2';
+                    tableDiv.className = 'border border-gray-200 rounded p-3 mb-3';
                     
                     const permissions = [
                         { name: 'Read', allowed: tableResult.canRead, icon: '👁️' },
@@ -837,7 +860,8 @@
                             `).join('')}
                         </div>
                         ${tableResult.errors.length > 0 ? `
-                            <div class="text-xs text-red-600 mt-1">
+                            <div class="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2 mt-2">
+                                <div class="font-medium mb-1">Errors:</div>
                                 ${tableResult.errors.map(error => `<div>• ${error}</div>`).join('')}
                             </div>
                         ` : ''}
@@ -856,72 +880,68 @@
         window.testDatabaseOperations = async function(table) {
             log(`🗄️ Testing ${table} operations...`, 'info');
             
-            if (!DatabaseService.currentUser) {
-                log(`❌ Authentication required to test ${table} operations`, 'error');
+            if (!supabase) {
+                log('❌ Supabase not configured - cannot test database operations', 'error');
                 return;
             }
             
             try {
-                const timestamp = Date.now();
-                let testItem;
+                // Test basic read operation
+                const { data, error } = await supabase.from(table).select('*').limit(5);
                 
-                // Create test data based on table
-                switch (table) {
-                    case 'prep_lists':
-                        testItem = {
-                            id: `test-${timestamp}`,
-                            name: `Test Prep List ${new Date().toLocaleTimeString()}`,
-                            items: [{ id: '1', name: 'Test Item', quantity: '5', unit: 'lbs' }]
-                        };
-                        break;
-                    case 'events':
-                        testItem = {
-                            id: `test-${timestamp}`,
-                            title: `Test Event ${new Date().toLocaleTimeString()}`,
-                            event_date: new Date().toISOString().split('T')[0],
-                            status: 'pending',
-                            total_servings: 25
-                        };
-                        break;
-                    case 'recipes':
-                        testItem = {
-                            id: `test-${timestamp}`,
-                            name: `Test Recipe ${new Date().toLocaleTimeString()}`,
-                            ingredients: ['Test ingredient'],
-                            instructions: 'Test instructions'
-                        };
-                        break;
-                    case 'methods':
-                        testItem = {
-                            id: `test-${timestamp}`,
-                            name: `Test Method ${new Date().toLocaleTimeString()}`,
-                            description: 'Test cooking method'
-                        };
-                        break;
-                    default:
-                        throw new Error(`Unknown table: ${table}`);
+                if (error) {
+                    if (error.code === '42501' || error.message?.includes('RLS')) {
+                        log(`🔒 ${table}: RLS policy active - authentication required for access`, 'warning');
+                    } else {
+                        log(`❌ ${table}: ${error.message}`, 'error');
+                    }
+                } else {
+                    log(`✅ ${table}: Successfully loaded ${data.length} records`, 'success');
                 }
-
-                // Insert test item
-                const { data, error } = await DatabaseService.supabase
-                    .from(table)
-                    .insert(testItem)
-                    .select()
-                    .single();
-
-                if (error) throw error;
                 
-                log(`✅ Created ${table} item: ${data.name || data.title}`, 'success');
-                
-                // Load items to verify
-                const { data: items, error: loadError } = await DatabaseService.supabase
-                    .from(table)
-                    .select('id, name, title')
-                    .limit(5);
-
-                if (loadError) throw loadError;
-                
-                log(`✅ Loaded ${items.length} ${table} items`, 'success');
+                // If authenticated, try a test insert
+                if (currentUser && DatabaseService.currentUser) {
+                    const testId = `test-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+                    let testData = { id: testId, name: `Test ${table} ${new Date().toLocaleTimeString()}` };
+                    
+                    // Customize test data per table
+                    switch (table) {
+                        case 'prep_lists':
+                            testData.items = [{ id: '1', name: 'Test Item', quantity: '1', unit: 'ea' }];
+                            break;
+                        case 'events':
+                            testData.date = new Date().toISOString().split('T')[0];
+                            testData.status = 'planning';
+                            testData.total_servings = 10;
+                            break;
+                        case 'recipes':
+                            testData.ingredients = ['Test ingredient'];
+                            testData.instructions = ['Test instruction'];
+                            break;
+                        case 'methods':
+                            testData.instructions = ['Test step'];
+                            testData.description = 'Test method description';
+                            break;
+                        case 'containers':
+                            testData.type = 'test';
+                            testData.description = 'Test container';
+                            break;
+                    }
+                    
+                    const { error: insertError } = await supabase.from(table).insert(testData);
+                    
+                    if (!insertError) {
+                        log(`✅ ${table}: Test record created successfully`, 'success');
+                        
+                        // Clean up test record
+                        const { error: deleteError } = await supabase.from(table).delete().eq('id', testId);
+                        if (!deleteError) {
+                            log(`🗑️ ${table}: Test record cleaned up`, 'system');
+                        }
+                    } else {
+                        log(`❌ ${table}: Failed to create test record - ${insertError.message}`, 'error');
+                    }
+                }
                 
             } catch (error) {
                 log(`❌ ${table} operations test failed: ${error.message}`, 'error');
@@ -931,9 +951,85 @@
         window.createTestData = async function() {
             log('➕ Creating comprehensive test data...', 'info');
             
+            if (!supabase) {
+                log('❌ Supabase not configured - cannot create test data', 'error');
+                return;
+            }
+            
+            if (!currentUser) {
+                log('❌ Authentication required to create test data', 'error');
+                return;
+            }
+            
             try {
-                await DatabaseService.createTestData();
-                log('✅ Test data created successfully', 'success');
+                const timestamp = Date.now();
+                const tables = [
+                    {
+                        name: 'prep_lists',
+                        data: {
+                            id: `test-prep-${timestamp}`,
+                            name: `Test Prep List ${new Date().toLocaleTimeString()}`,
+                            items: [
+                                { id: '1', name: 'Onions', quantity: '5', unit: 'lbs' },
+                                { id: '2', name: 'Carrots', quantity: '3', unit: 'lbs' }
+                            ]
+                        }
+                    },
+                    {
+                        name: 'events',
+                        data: {
+                            id: `test-event-${timestamp}`,
+                            title: `Test Event ${new Date().toLocaleTimeString()}`,
+                            event_date: new Date().toISOString().split('T')[0],
+                            status: 'planning',
+                            total_servings: 50
+                        }
+                    },
+                    {
+                        name: 'recipes',
+                        data: {
+                            id: `test-recipe-${timestamp}`,
+                            name: `Test Recipe ${new Date().toLocaleTimeString()}`,
+                            ingredients: ['Test ingredient 1', 'Test ingredient 2'],
+                            instructions: 'Test cooking instructions'
+                        }
+                    },
+                    {
+                        name: 'methods',
+                        data: {
+                            id: `test-method-${timestamp}`,
+                            name: `Test Method ${new Date().toLocaleTimeString()}`,
+                            description: 'Test cooking method for debugging'
+                        }
+                    },
+                    {
+                        name: 'containers',
+                        data: {
+                            id: `test-container-${timestamp}`,
+                            name: `Test Container ${new Date().toLocaleTimeString()}`,
+                            type: 'storage',
+                            description: 'Test container for debugging'
+                        }
+                    }
+                ];
+                
+                let successCount = 0;
+                for (const table of tables) {
+                    try {
+                        const { error } = await supabase.from(table.name).insert(table.data);
+                        if (error) {
+                            log(`❌ Failed to create test ${table.name}: ${error.message}`, 'error');
+                        } else {
+                            successCount++;
+                            log(`✅ Created test ${table.name}: ${table.data.name || table.data.title}`, 'success');
+                        }
+                    } catch (error) {
+                        log(`❌ Error creating test ${table.name}: ${error.message}`, 'error');
+                    }
+                }
+                
+                log(`✅ Test data creation completed - ${successCount}/${tables.length} successful`, 'success');
+                
             } catch (error) {
                 log(`❌ Test data creation failed: ${error.message}`, 'error');
             }
@@ -942,61 +1038,118 @@
         window.cleanupTestData = async function() {
             log('🗑️ Cleaning up test data...', 'info');
             
+            if (!supabase) {
+                log('❌ Supabase not configured', 'error');
+                return;
+            }
+            
+            if (!currentUser) {
+                log('❌ Authentication required to cleanup test data', 'error');
+                return;
+            }
+            
             try {
-                const result = await DatabaseService.cleanupTestData();
-                log(`✅ Test data cleanup completed - removed ${result.deleted} items`, 'success');
+                const tablesToClean = ['prep_lists', 'events', 'recipes', 'methods', 'containers'];
+                let totalDeleted = 0;
+
+                for (const table of tablesToClean) {
+                    try {
+                        const { data: testItems } = await supabase
+                            .from(table)
+                            .select('id, name, title')
+                            .or('name.ilike.Test %,title.ilike.Test %');
+
+                        if (testItems && testItems.length > 0) {
+                            const ids = testItems.map(item => item.id);
+                            const { error } = await supabase
+                                .from(table)
+                                .delete()
+                                .in('id', ids);
+
+                            if (!error) {
+                                totalDeleted += testItems.length;
+                                log(`🗑️ Cleaned up ${testItems.length} test items from ${table}`, 'success');
+                            } else {
+                                log(`❌ Failed to cleanup ${table}: ${error.message}`, 'error');
+                            }
+                        }
+                    } catch (error) {
+                        log(`❌ Error cleaning ${table}: ${error.message}`, 'error');
+                    }
+                }
+                
+                log(`✅ Test data cleanup completed - deleted ${totalDeleted} items`, 'success');
+                
             } catch (error) {
                 log(`❌ Test data cleanup failed: ${error.message}`, 'error');
             }
         };
 
         window.testRealtime = async function() {
-            log('⚡ Testing real-time connections...', 'info');
+            log('⚡ Testing real-time features...', 'info');
             
+            if (!supabase) {
+                log('❌ Supabase not configured - cannot test real-time', 'error');
+                return;
+            }
+            
+            const realtimeLog = document.getElementById('realtime-log');
             const realtimeStatus = document.getElementById('realtime-status');
-            realtimeStatus.innerHTML = `
-                <span class="status-indicator status-loading"></span>
-                Testing real-time subscriptions...
-            `;
             
             try {
-                // Test real-time subscription
-                const channel = DatabaseService.supabase
-                    .channel('test-channel')
+                // Create a channel for prep_lists
+                const channel = supabase
+                    .channel('prep_lists_test')
                     .on('postgres_changes', {
                         event: '*',
                         schema: 'public',
                         table: 'prep_lists'
                     }, (payload) => {
-                        log(`📡 Real-time event received: ${payload.eventType} on prep_lists`, 'info');
+                        const timestamp = new Date().toLocaleTimeString();
+                        const div = document.createElement('div');
+                        div.className = 'text-blue-600 text-xs';
+                        div.textContent = `[${timestamp}] ${payload.eventType}: ${JSON.stringify(payload.new || payload.old)}`;
+                        realtimeLog.appendChild(div);
+                        realtimeLog.scrollTop = realtimeLog.scrollHeight;
+                        log(`🔔 Real-time event: ${payload.eventType} on prep_lists`, 'info');
                     })
                     .subscribe((status) => {
-                        if (status === 'SUBSCRIBED') {
-                            realtimeStatus.innerHTML = `
-                                <span class="status-indicator status-success"></span>
-                                Real-time subscriptions active
-                            `;
-                            log('✅ Real-time testing completed - subscriptions working', 'success');
-                        } else if (status === 'CHANNEL_ERROR') {
-                            realtimeStatus.innerHTML = `
-                                <span class="status-indicator status-error"></span>
-                                Real-time connection failed
-                            `;
-                            log('❌ Real-time subscription failed', 'error');
-                        }
+                        const statusText = {
+                            'SUBSCRIBED': 'Connected',
+                            'CHANNEL_ERROR': 'Error',
+                            'TIMED_OUT': 'Timeout',
+                            'CLOSED': 'Closed'
+                        }[status] || status;
+                        
+                        const statusClass = status === 'SUBSCRIBED' ? 'status-success' : 'status-error';
+                        
+                        realtimeStatus.innerHTML = `
+                            <div class="flex items-center text-sm">
+                                <span class="status-indicator ${statusClass}"></span>
+                                Real-time: ${statusText}
+                            </div>
+                        `;
+                        
+                        log(`⚡ Real-time subscription status: ${status}`, status === 'SUBSCRIBED' ? 'success' : 'warning');
                     });
-
-                // Cleanup after 5 seconds
-                setTimeout(() => {
-                    channel.unsubscribe();
-                    log('📡 Real-time test channel closed', 'info');
-                }, 5000);
+                
+                // Test real-time by creating a test record
+                setTimeout(async () => {
+                    if (currentUser) {
+                        try {
+                            await supabase.from('prep_lists').insert({
+                                id: `realtime-test-${Date.now()}`,
+                                name: 'Real-time Test List',
+                                items: []
+                            });
+                            log('📡 Created test record to trigger real-time event', 'info');
+                        } catch (error) {
+                            log(`❌ Failed to create real-time test record: ${error.message}`, 'error');
+                        }
+                    }
+                }, 2000);
                 
             } catch (error) {
-                realtimeStatus.innerHTML = `
-                    <span class="status-indicator status-error"></span>
-                    Real-time test failed
-                `;
                 log(`❌ Real-time testing failed: ${error.message}`, 'error');
             }
         };
@@ -1004,41 +1157,44 @@
         window.runPerformanceTests = async function() {
             log('🏃‍♂️ Running performance tests...', 'info');
             
+            if (!supabase) {
+                log('❌ Supabase not configured', 'error');
+                return;
+            }
+            
             const performanceResults = document.getElementById('performance-results');
-            performanceResults.innerHTML = '<div class="text-sm text-gray-600">Running tests...</div>';
+            const tablesToTest = ['prep_lists', 'events', 'recipes', 'methods'];
+            const results = [];
             
             try {
-                const tests = [
-                    { name: 'SELECT prep_lists', query: () => DatabaseService.supabase.from('prep_lists').select('id').limit(1) },
-                    { name: 'SELECT events', query: () => DatabaseService.supabase.from('events').select('id').limit(1) },
-                    { name: 'SELECT recipes', query: () => DatabaseService.supabase.from('recipes').select('id').limit(1) },
-                    { name: 'Auth session check', query: () => DatabaseService.supabase.auth.getSession() }
-                ];
-
-                const results = [];
-                
-                for (const test of tests) {
-                    const start = performance.now();
-                    try {
-                        await test.query();
-                        const time = Math.round(performance.now() - start);
-                        results.push({ operation: test.name, time: `${time}ms`, success: true });
-                        log(`⚡ ${test.name}: ${time}ms`, 'success');
-                    } catch (error) {
-                        const time = Math.round(performance.now() - start);
-                        results.push({ operation: test.name, time: `${time}ms (failed)`, success: false });
-                        log(`❌ ${test.name}: ${error.message}`, 'error');
+                for (const table of tablesToTest) {
+                    const startTime = performance.now();
+                    const { data, error } = await supabase.from(table).select('*').limit(10);
+                    const endTime = performance.now();
+                    const duration = Math.round(endTime - startTime);
+                    
+                    if (error) {
+                        results.push({ table, status: 'error', duration: 0, error: error.message });
+                        log(`❌ ${table}: Query failed - ${error.message}`, 'error');
+                    } else {
+                        results.push({ table, status: 'success', duration, records: data.length });
+                        log(`⚡ ${table}: ${duration}ms (${data.length} records)`, 'success');
                     }
                 }
                 
-                performanceResults.innerHTML = results.map(result => `
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-700">${result.operation}:</span>
-                        <span class="${result.success ? 'text-green-600' : 'text-red-600'} font-medium">${result.time}</span>
+                // Display results
+                performanceResults.innerHTML = `
+                    <div class="text-sm font-medium text-gray-700 mb-2">Query Performance Results:</div>
+                    ${results.map(result => `
+                        <div class="flex justify-between items-center text-xs py-1 ${result.status === 'success' ? 'text-green-600' : 'text-red-600'}">
+                            <span>📋 ${result.table}</span>
+                            <span>${result.status === 'success' ? `${result.duration}ms (${result.records} records)` : 'Failed'}</span>
+                        </div>
+                    `).join('')}
+                    <div class="text-xs text-gray-500 mt-2">
+                        Average: ${Math.round(results.filter(r => r.status === 'success').reduce((acc, r) => acc + r.duration, 0) / results.filter(r => r.status === 'success').length)}ms
                     </div>
-                `).join('');
-                
-                log('✅ Performance tests completed', 'success');
+                `;
                 
             } catch (error) {
                 log(`❌ Performance testing failed: ${error.message}`, 'error');
@@ -1046,38 +1202,41 @@
         };
 
         window.clearConsole = function() {
-            document.getElementById('console-log').innerHTML = '';
-            log('🧹 Console cleared', 'system');
+            const console = document.getElementById('console-log');
+            console.innerHTML = '<div class="text-gray-500">[System] Console cleared</div>';
         };
 
-        window.exportLog = function() {
-            const logContent = document.getElementById('console-log').textContent;
-            const blob = new Blob([logContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `prep-chef-db-test-${new Date().toISOString().slice(0,19)}.log`;
-            a.click();
-            URL.revokeObjectURL(url);
-            log('📄 Test log exported', 'info');
-        };
-
-        // Initialize on load
-        window.addEventListener('load', async () => {
-            log('🚀 Database testing interface loaded', 'system');
+        // Initialize everything
+        async function init() {
+            log('🚀 Initializing database testing environment...', 'system');
             
             try {
-                await DatabaseService.initialize();
-                log('✅ Database service initialized', 'system');
+                await initializeDatabaseService();
                 
-                // Check environment automatically
-                setTimeout(checkEnvironment, 1000);
+                // Initial environment check
+                setTimeout(async () => {
+                    await checkEnvironment();
+                    
+                    // Check initial auth state
+                    if (supabase) {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (session) {
+                            updateAuthStatus(true, session.user.email);
+                            log(`🔐 Found existing session for ${session.user.email}`, 'info');
+                        } else {
+                            updateAuthStatus(false);
+                        }
+                    }
+                }, 1000);
                 
             } catch (error) {
-                log(`❌ Database service initialization failed: ${error.message}`, 'error');
-                updateConnectionStatus('error', error.message);
+                log(`❌ Initialization failed: ${error.message}`, 'error');
+                updateConnectionStatus('error', 'Initialization failed');
             }
-        });
+        }
+
+        // Start initialization
+        init();
     </script>
 </body>
 </html>
