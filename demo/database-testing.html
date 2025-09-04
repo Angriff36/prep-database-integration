@@ -395,7 +395,10 @@
 
         // Auto-test connection on load
         window.addEventListener('load', () => {
-            setTimeout(testConnection, 1000);
+            log('🚀 Database testing ready!', 'info');
+            log('⚠️ Update supabaseUrl and supabaseKey in the HTML with your real credentials', 'warning');
+            log('📝 Then test: Sign In → Create Prep List → Load Prep Lists', 'info');
+            setTimeout(testConnection, 500);
         });
     </script>
 </body>
