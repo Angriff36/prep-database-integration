@@ -27,6 +27,7 @@ interface PrepList {
   name: string;
   items: PrepItem[];
   company_id?: string;
+  user_id?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -40,6 +41,7 @@ interface Event {
   status: 'planning' | 'prep' | 'active' | 'complete';
   totalServings: number;
   company_id?: string;
+  user_id?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -59,6 +61,7 @@ interface Recipe {
   notes?: string;
   image?: string;
   company_id?: string;
+  user_id?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -304,6 +307,7 @@ export class DatabaseService {
         name: data.name,
         items: data.items || [],
         company_id: data.company_id,
+        user_id: data.user_id,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -331,6 +335,7 @@ export class DatabaseService {
           name: item.name,
           items: Array.isArray(item.items) ? item.items : [],
           company_id: item.company_id,
+          user_id: item.user_id,
           created_at: item.created_at,
           updated_at: item.updated_at
         }));
@@ -397,6 +402,7 @@ export class DatabaseService {
         status: data.status,
         totalServings: data.total_servings || 0,
         company_id: data.company_id,
+        user_id: data.user_id,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -427,6 +433,7 @@ export class DatabaseService {
           status: item.status || 'planning',
           totalServings: Number(item.total_servings) || 0,
           company_id: item.company_id,
+          user_id: item.user_id,
           created_at: item.created_at,
           updated_at: item.updated_at
         }));
@@ -489,6 +496,7 @@ export class DatabaseService {
         notes: data.notes,
         image: data.image,
         company_id: data.company_id,
+        user_id: data.user_id,
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };
@@ -525,6 +533,7 @@ export class DatabaseService {
           notes: item.notes,
           image: item.image,
           company_id: item.company_id,
+          user_id: item.user_id,
           createdAt: item.created_at,
           updatedAt: item.updated_at
         }));
