@@ -195,76 +195,11 @@
     </div>
 
     <script type="module">
-        // Import the actual DatabaseService for real testing
-        // Note: This would need to be built and served properly for real use
+        // Import the real DatabaseService
+        import { DatabaseService } from './services/DatabaseService.js';
         
-        // Mock implementation for demonstration
-        window.MockDatabaseService = {
-            async initialize() {
-                return Promise.resolve();
-            },
-            
-            async diagnoseConnection() {
-                const hasUrl = Boolean(import.meta?.env?.VITE_SUPABASE_URL);
-                const hasKey = Boolean(import.meta?.env?.VITE_SUPABASE_ANON_KEY);
-                
-                return {
-                    configured: hasUrl && hasKey,
-                    accessible: false,
-                    authenticated: false,
-                    tables: hasUrl && hasKey ? ['prep_lists (RLS active)', 'events (RLS active)', 'recipes (RLS active)'] : [],
-                    errors: !hasUrl || !hasKey ? ['Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in .env'] : ['Authentication required for data access'],
-                    user: null,
-                    userProfile: null,
-                    rlsStatus: {
-                        prep_lists: { enabled: true, policies: ['SELECT: Users can view own prep lists'] },
-                        events: { enabled: true, policies: ['SELECT: Users can view own events'] },
-                        recipes: { enabled: true, policies: ['SELECT: Users can view own recipes'] }
-                    }
-                };
-            },
-            
-            async signIn(email, password) {
-                // Simulate sign in
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                return { success: true };
-            },
-            
-            async signUp(email, password, userData) {
-                // Simulate sign up
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                return { success: true };
-            },
-            
-            async signOut() {
-                return { success: true };
-            },
-            
-            async testRLSPolicies() {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                return {
-                    authenticated: false,
-                    tables: {
-                        prep_lists: { canRead: false, canInsert: false, canUpdate: false, canDelete: false, errors: ['Authentication required'] },
-                        events: { canRead: false, canInsert: false, canUpdate: false, canDelete: false, errors: ['Authentication required'] },
-                        recipes: { canRead: false, canInsert: false, canUpdate: false, canDelete: false, errors: ['Authentication required'] }
-                    }
-                };
-            },
-            
-            async createTestData(options = {}) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                return Promise.resolve();
-            },
-            
-            async cleanupTestData() {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                return Promise.resolve();
-            }
-        };
-        
-        // Initialize the service
-        window.DatabaseService = window.MockDatabaseService;
+        // Make it available globally for the interface
+        window.DatabaseService = DatabaseService;
     </script>
 
     <script>
