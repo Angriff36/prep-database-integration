@@ -202,11 +202,22 @@
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
         
         // Get environment variables or use fallback
-        const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || 'https://hwqdspmngjcnqdqijpio.supabase.co';
-        const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3cWRzcG1uZ2pjbnFkcWlqcGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTAwMDUsImV4cCI6MjA3MjM2NjAwNX0._y1Vjipk_I2-4kyvJX-j4ncFR45cGKjxgFml3GPGibU';
+        const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env?.VITE_SUPABASE_ANON_KEY;
+        
+        // Check if credentials are available
+        if (!supabaseUrl || !supabaseKey) {
+            log('❌ Missing Supabase credentials in .env file', 'error');
+            log('📝 Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file', 'warning');
+            updateConnectionStatus('error', 'Missing environment variables');
+            return;
+        }
         
         // Create Supabase client
         const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        log(`✅ Using your database: ${supabaseUrl}`, 'success');
+        log(`🔑 Using your credentials: ${supabaseKey.slice(0, 20)}...`, 'info');
         
         // Create a simplified DatabaseService with the methods needed for testing
         window.DatabaseService = {
@@ -232,13 +243,7 @@
                     errors: error && error.code !== '42501' ? [error.message] : [],
                     user: session?.user || null,
                     userProfile: null,
-                    rlsStatus: {
-                        prep_lists: { enabled: true, policies: ['RLS policy active'] },
-                        events: { enabled: true, policies: ['RLS policy active'] },
-                        recipes: { enabled: true, policies: ['RLS policy active'] },
-                        methods: { enabled: true, policies: ['RLS policy active'] },
-                        containers: { enabled: true, policies: ['RLS policy active'] }
-                    }
+                    rlsStatus: {} // Will be populated by actual RLS checks
                 };
             },
             
@@ -614,9 +619,18 @@
             log(`🗄️ Testing ${table} operations...`, 'info');
             
             try {
-                // This would call actual database operations in real implementation
-                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-                log(`✅ ${table} operations test completed`, 'success');
+                // Test actual database operations
+                const { data, error } = await supabase.from(table).select('*').limit(1);
+                
+                if (error) {
+                    if (error.code === '42501') {
+                        log(`⚠️ ${table}: RLS policies active - authentication may be required`, 'warning');
+                    } else {
+                        throw error;
+                    }
+                } else {
+                    log(`✅ ${table}: Successfully queried ${data?.length || 0} records`, 'success');
+                }
             } catch (error) {
                 log(`❌ ${table} operations test failed: ${error.message}`, 'error');
             }
@@ -650,17 +664,44 @@
             const realtimeStatus = document.getElementById('realtime-status');
             realtimeStatus.innerHTML = `
                 <span class="status-indicator status-loading"></span>
-                Testing real-time subscriptions...
+                Connecting to real-time channels...
             `;
             
-            // Simulate real-time testing
-            setTimeout(() => {
+            try {
+                // Test actual real-time connection
+                const channel = supabase.channel('test-channel')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'prep_lists' }, payload => {
+                        log(`📡 Real-time event received: ${payload.eventType}`, 'info');
+                    })
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            realtimeStatus.innerHTML = `
+                                <span class="status-indicator status-success"></span>
+                                Real-time connection active
+                            `;
+                            log('✅ Real-time connection established', 'success');
+                        } else if (status === 'CHANNEL_ERROR') {
+                            realtimeStatus.innerHTML = `
+                                <span class="status-indicator status-error"></span>
+                                Real-time connection failed
+                            `;
+                            log('❌ Real-time connection failed', 'error');
+                        }
+                    });
+                
+                // Unsubscribe after 5 seconds
+                setTimeout(() => {
+                    supabase.removeChannel(channel);
+                    log('🔌 Real-time test completed, channel closed', 'info');
+                }, 5000);
+                
+            } catch (error) {
                 realtimeStatus.innerHTML = `
-                    <span class="status-indicator status-success"></span>
-                    Real-time connections working (simulated)
+                    <span class="status-indicator status-error"></span>
+                    Real-time test failed
                 `;
-                log('✅ Real-time testing completed', 'success');
-            }, 2000);
+                log(`❌ Real-time test failed: ${error.message}`, 'error');
+            }
         }
 
         async function runPerformanceTests() {
@@ -669,13 +710,38 @@
             const performanceResults = document.getElementById('performance-results');
             performanceResults.innerHTML = '<div class="text-sm text-gray-600">Running tests...</div>';
             
-            // Simulate performance testing
-            setTimeout(() => {
-                const results = [
-                    { operation: 'SELECT prep_lists', time: '12ms' },
-                    { operation: 'INSERT prep_list', time: '24ms' },
-                    { operation: 'UPDATE prep_list', time: '18ms' },
-                    { operation: 'SELECT events', time: '8ms' }
+            try {
+                const results = [];
+                
+                // Test actual query performance
+                const tables = ['prep_lists', 'events', 'recipes'];
+                
+                for (const table of tables) {
+                    const start = performance.now();
+                    const { error } = await supabase.from(table).select('id').limit(1);
+                    const end = performance.now();
+                    
+                    results.push({
+                        operation: `SELECT ${table}`,
+                        time: `${Math.round(end - start)}ms`,
+                        success: !error || error.code === '42501'
+                    });
+                }
+                
+                performanceResults.innerHTML = results.map(result => `
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-700">${result.operation}:</span>
+                        <span class="${result.success ? 'text-green-600' : 'text-red-600'} font-medium">${result.time}</span>
+                    </div>
+                `).join('');
+                
+                log('✅ Performance tests completed with real database queries', 'success');
+                
+            } catch (error) {
+                performanceResults.innerHTML = `<div class="text-red-600 text-sm">Performance test failed: ${error.message}</div>`;
+                log(`❌ Performance tests failed: ${error.message}`, 'error');
+            }
+        }
                 ];
                 
                 performanceResults.innerHTML = results.map(result => `
