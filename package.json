@@ -15,7 +15,7 @@
     "demo"
   ],
   "scripts": {
-    "dev": "vite build --watch",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --port 3007",
     "test-db": "vite dev --port 3007 --host",
