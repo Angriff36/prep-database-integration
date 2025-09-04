@@ -4,6 +4,9 @@ export default defineConfig({
   root: 'demo', 
   envDir: '../', // Look for .env in the parent directory
   // Environment variables starting with VITE_ are automatically available
+  build: {
+    target: 'es2022' // Support top-level await
+  },
   server: {
     port: 3007,
     host: true
