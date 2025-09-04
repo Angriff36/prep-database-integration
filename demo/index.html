@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Integration Testing - Prep Chef</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 px-6 py-4">
+            <div class="max-w-7xl mx-auto">
+                <h1 class="text-2xl font-bold text-gray-900">🗄️ Database Integration Testing</h1>
+                <p class="text-gray-600 mt-1">Debug and test database connections independently</p>
+                <div class="mt-2 flex gap-4 text-sm">
+                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">🔍 Real Database Testing</span>
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded">🔌 Live Connection</span>
+                    <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">🛠️ RLS Validation</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            
+            <!-- Environment Status -->
+            <section class="mb-8">
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold mb-4">🔧 Environment Status</h2>
+                    <div id="env-info" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-gray-50 p-4 rounded">
+                            <h3 class="font-medium text-gray-900 mb-2">Supabase URL</h3>
+                            <div id="url-status" class="text-sm">Checking...</div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded">
+                            <h3 class="font-medium text-gray-900 mb-2">Anon Key</h3>
+                            <div id="key-status" class="text-sm">Checking...</div>
+                        </div>
+                    </div>
+                    <button onclick="checkEnvironment(); return false;" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">
+                        🔄 Check Environment
+                    </button>
+                </div>
+            </section>
+
+            <!-- Connection Test -->
+            <section class="mb-8">
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold mb-4">📡 Database Connection</h2>
+                    <div id="connection-status" class="mb-4">
+                        <div class="text-gray-600">Click "Test Connection" to verify database access</div>
+                    </div>
+                    <button onclick="testConnection(); return false;" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors">
+                        🧪 Test Connection
+                    </button>
+                </div>
+            </section>
+
+            <!-- Authentication -->
+            <section class="mb-8">
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold mb-4">🔐 Authentication Test</h2>
+                    <div id="auth-controls">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="signin-email" value="test@prepchef.com" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" id="signin-password" value="test123456"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="testSignIn(); return false;" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                                    Sign In
+                                </button>
+                                <button onclick="testSignUp(); return false;" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                                    Create User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Operations -->
+            <section class="mb-8">
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h2 class="text-lg font-semibold mb-4">🗄️ Database Operations Testing</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <button onclick="testPrepLists(); return false;" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded transition-colors">
+                            📋 Test Prep Lists
+                        </button>
+                        <button onclick="testEvents(); return false;" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded transition-colors">
+                            📅 Test Events
+                        </button>
+                        <button onclick="testRecipes(); return false;" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded transition-colors">
+                            🍽️ Test Recipes
+                        </button>
+                        <button onclick="testCreateData(); return false;" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded transition-colors">
+                            🚀 Create Test Data
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Log -->
+            <section>
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">📋 Test Results</h2>
+                        <button onclick="clearLog(); return false;" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                            Clear Log
+                        </button>
+                    </div>
+                    <div id="results-log" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm max-h-96 overflow-y-auto">
+                        <div class="text-gray-500">Database testing console initialized...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        // Now we can access the real environment variables through Vite
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        // Import Supabase
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+        
+        // Create real Supabase client with your credentials
+        let supabase = null;
+        
+        if (supabaseUrl && supabaseKey) {
+            supabase = createClient(supabaseUrl, supabaseKey);
+            log(`✅ Supabase client initialized with URL: ${supabaseUrl.slice(0, 30)}...`, 'success');
+        } else {
+            log('❌ Missing Supabase credentials in environment', 'error');
+        }
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('results-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                success: 'text-green-400',
+                error: 'text-red-400',
+                info: 'text-blue-400',
+                warning: 'text-yellow-400'
+            };
+            
+            const div = document.createElement('div');
+            div.className = colors[type] || 'text-gray-300';
+            div.innerHTML = `<span class="text-gray-500">[${timestamp}]</span> ${message}`;
+            
+            logEl.appendChild(div);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // Environment check
+        window.checkEnvironment = function() {
+            log('🔧 Checking environment configuration...', 'info');
+            
+            const urlStatus = document.getElementById('url-status');
+            const keyStatus = document.getElementById('key-status');
+            
+            if (supabaseUrl) {
+                urlStatus.innerHTML = `<span class="text-green-600">✅ ${supabaseUrl.slice(0, 40)}...</span>`;
+                log(`✅ Supabase URL configured: ${supabaseUrl}`, 'success');
+            } else {
+                urlStatus.innerHTML = '<span class="text-red-600">❌ Not configured</span>';
+                log('❌ VITE_SUPABASE_URL not found in environment', 'error');
+            }
+            
+            if (supabaseKey) {
+                keyStatus.innerHTML = `<span class="text-green-600">✅ ${supabaseKey.slice(0, 10)}...</span>`;
+                log(`✅ Supabase anon key configured: ${supabaseKey.slice(0, 20)}...`, 'success');
+            } else {
+                keyStatus.innerHTML = '<span class="text-red-600">❌ Not configured</span>';
+                log('❌ VITE_SUPABASE_ANON_KEY not found in environment', 'error');
+            }
+        };
+
+        // Connection test
+        window.testConnection = async function() {
+            if (!supabase) {
+                log('❌ Cannot test connection - Supabase not configured', 'error');
+                return;
+            }
+            
+            log('📡 Testing database connection...', 'info');
+            
+            try {
+                // Test basic connectivity
+                const { data, error } = await supabase
+                    .from('prep_lists')
+                    .select('id')
+                    .limit(1);
+                
+                const connectionStatus = document.getElementById('connection-status');
+                
+                if (error) {
+                    if (error.code === '42501') {
+                        connectionStatus.innerHTML = '<div class="text-yellow-600">⚠️ Connected but RLS restrictions active (expected)</div>';
+                        log('⚠️ Connection successful but RLS policies are restricting access', 'warning');
+                        log('💡 This is expected behavior - you need to authenticate first', 'info');
+                    } else {
+                        connectionStatus.innerHTML = `<div class="text-red-600">❌ Connection failed: ${error.message}</div>`;
+                        log(`❌ Connection failed: ${error.message}`, 'error');
+                    }
+                } else {
+                    connectionStatus.innerHTML = '<div class="text-green-600">✅ Database connection successful!</div>';
+                    log('✅ Database connection successful!', 'success');
+                }
+            } catch (err) {
+                log(`❌ Connection test failed: ${err.message}`, 'error');
+            }
+        };
+
+        // Authentication tests
+        window.testSignUp = async function() {
+            if (!supabase) {
+                log('❌ Cannot test authentication - Supabase not configured', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            
+            log(`👤 Creating test user: ${email}`, 'info');
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            full_name: 'Test User'
+                        }
+                    }
+                });
+                
+                if (error) throw error;
+                log('✅ Test user created successfully!', 'success');
+                updateAuthUI(true, email);
+                
+            } catch (error) {
+                if (error.message.includes('User already registered')) {
+                    log('👤 User already exists, trying sign in...', 'info');
+                    await window.testSignIn();
+                } else {
+                    log(`❌ Sign up failed: ${error.message}`, 'error');
+                }
+            }
+        };
+        
+        window.testSignIn = async function() {
+            if (!supabase) {
+                log('❌ Cannot test authentication - Supabase not configured', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            
+            log(`🔐 Signing in: ${email}`, 'info');
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) throw error;
+                log('✅ Signed in successfully!', 'success');
+                updateAuthUI(true, email);
+                
+            } catch (error) {
+                log(`❌ Sign in failed: ${error.message}`, 'error');
+            }
+        };
+
+        function updateAuthUI(isSignedIn, email = '') {
+            const authControls = document.getElementById('auth-controls');
+            
+            if (isSignedIn) {
+                authControls.innerHTML = `
+                    <div class="text-green-600 mb-3">
+                        ✅ Authenticated as: <strong>${email}</strong>
+                    </div>
+                    <button onclick="testSignOut(); return false;" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors">
+                        Sign Out
+                    </button>
+                `;
+            }
+        }
+
+        window.testSignOut = async function() {
+            if (!supabase) return;
+            
+            try {
+                await supabase.auth.signOut();
+                log('✅ Signed out successfully', 'success');
+                location.reload();
+            } catch (error) {
+                log(`❌ Sign out failed: ${error.message}`, 'error');
+            }
+        };
+
+        // Database operation tests
+        window.testPrepLists = async function() {
+            if (!supabase) {
+                log('❌ Cannot test prep lists - Supabase not configured', 'error');
+                return;
+            }
+            
+            log('📋 Testing prep lists...', 'info');
+            
+            try {
+                // Try to create a test prep list
+                const testList = {
+                    id: `test-${Date.now()}`,
+                    name: `Test Prep List ${new Date().toLocaleTimeString()}`,
+                    items: [
+                        { id: '1', name: 'Test Item', quantity: '5', unit: 'lbs' }
+                    ]
+                };
+                
+                const { data, error } = await supabase
+                    .from('prep_lists')
+                    .insert(testList)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                log(`✅ Created prep list: "${data.name}"`, 'success');
+                log(`🔗 Prep list ID: ${data.id}`, 'info');
+                
+                // Try to read it back
+                const { data: lists, error: readError } = await supabase
+                    .from('prep_lists')
+                    .select('*')
+                    .limit(5);
+                
+                if (readError) throw readError;
+                log(`✅ Successfully read ${lists.length} prep lists from database`, 'success');
+                
+            } catch (error) {
+                log(`❌ Prep list test failed: ${error.message}`, 'error');
+                if (error.code === '42501') {
+                    log('💡 This might be due to RLS policies - try authenticating first', 'info');
+                }
+            }
+        };
+
+        window.testEvents = async function() {
+            if (!supabase) {
+                log('❌ Cannot test events - Supabase not configured', 'error');
+                return;
+            }
+            
+            log('📅 Testing events...', 'info');
+            
+            try {
+                const testEvent = {
+                    id: `test-event-${Date.now()}`,
+                    title: `Test Event ${new Date().toLocaleTimeString()}`,
+                    event_date: new Date().toISOString().split('T')[0],
+                    status: 'planning',
+                    total_servings: 50
+                };
+                
+                const { data, error } = await supabase
+                    .from('events')
+                    .insert(testEvent)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                log(`✅ Created event: "${data.title}"`, 'success');
+                
+            } catch (error) {
+                log(`❌ Event test failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.testRecipes = async function() {
+            if (!supabase) {
+                log('❌ Cannot test recipes - Supabase not configured', 'error');
+                return;
+            }
+            
+            log('🍽️ Testing recipes...', 'info');
+            
+            try {
+                const testRecipe = {
+                    id: `test-recipe-${Date.now()}`,
+                    name: `Test Recipe ${new Date().toLocaleTimeString()}`,
+                    ingredients: ['Test ingredient 1', 'Test ingredient 2'],
+                    instructions: 'Test instructions for the recipe'
+                };
+                
+                const { data, error } = await supabase
+                    .from('recipes')
+                    .insert(testRecipe)
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                log(`✅ Created recipe: "${data.name}"`, 'success');
+                
+            } catch (error) {
+                log(`❌ Recipe test failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.testCreateData = async function() {
+            log('🚀 Creating comprehensive test data...', 'info');
+            
+            // Run all tests in sequence
+            await window.testPrepLists();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await window.testEvents();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await window.testRecipes();
+            
+            log('✅ Test data creation completed!', 'success');
+        };
+
+        window.clearLog = function() {
+            document.getElementById('results-log').innerHTML = '';
+            log('Database testing console cleared', 'info');
+        };
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            log('🚀 Database testing interface loaded', 'info');
+            window.checkEnvironment();
+        });
+    </script>
+</body>
+</html>
