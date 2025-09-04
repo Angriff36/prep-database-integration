@@ -13,6 +13,9 @@
             <div class="max-w-7xl mx-auto">
                 <h1 class="text-2xl font-bold text-gray-900">🗄️ Database Integration Testing</h1>
                 <p class="text-gray-600 mt-1">Debug and test database connections independently</p>
+                <div class="mt-2 text-sm text-gray-500" id="env-debug">
+                    Environment loading...
+                </div>
                 <div class="mt-2 flex gap-4 text-sm">
                     <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">🔍 Real Database Testing</span>
                     <span class="bg-green-100 text-green-800 px-2 py-1 rounded">🔌 Live Connection</span>
@@ -127,8 +130,14 @@
 
     <script type="module">
         // Now we can access the real environment variables through Vite
+        console.log('[Environment] Checking import.meta.env:', import.meta.env);
+        
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        // Debug environment loading
+        const envDebug = document.getElementById('env-debug');
+        envDebug.textContent = `URL: ${supabaseUrl ? 'Found' : 'Missing'}, Key: ${supabaseKey ? 'Found' : 'Missing'}`;
         
         // Import Supabase
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
@@ -138,9 +147,14 @@
         
         if (supabaseUrl && supabaseKey) {
             supabase = createClient(supabaseUrl, supabaseKey);
-            log(`✅ Supabase client initialized with URL: ${supabaseUrl.slice(0, 30)}...`, 'success');
+            log(`✅ Supabase client initialized`, 'success');
+            log(`   URL: ${supabaseUrl}`, 'info');
+            log(`   Key: ${supabaseKey.slice(0, 20)}...`, 'info');
         } else {
             log('❌ Missing Supabase credentials in environment', 'error');
+            log(`   URL found: ${!!supabaseUrl}`, 'error');
+            log(`   Key found: ${!!supabaseKey}`, 'error');
+            log('   Check your .env file has VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY', 'info');
         }
 
         // Logging function

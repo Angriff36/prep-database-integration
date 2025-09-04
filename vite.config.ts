@@ -1,11 +1,9 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  root: 'demo',
-  define: {
-    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL || ''),
-    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY || ''),
-  },
+  root: 'demo', 
+  envDir: '../', // Look for .env in the parent directory
+  // Environment variables starting with VITE_ are automatically available
   server: {
     port: 3007,
     host: true
