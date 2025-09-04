@@ -135,9 +135,16 @@
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
         
-        // Debug environment loading
+        // Debug environment loading - show actual values
         const envDebug = document.getElementById('env-debug');
         envDebug.textContent = `URL: ${supabaseUrl ? 'Found' : 'Missing'}, Key: ${supabaseKey ? 'Found' : 'Missing'}`;
+        
+        console.log('[Real Environment Check]', {
+            url: supabaseUrl ? `${supabaseUrl.slice(0, 30)}...` : 'MISSING',
+            key: supabaseKey ? `${supabaseKey.slice(0, 10)}...` : 'MISSING',
+            hasUrl: !!supabaseUrl,
+            hasKey: !!supabaseKey
+        });
         
         // Import Supabase
         const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
@@ -179,6 +186,8 @@
         // Environment check
         window.checkEnvironment = function() {
             log('🔧 Checking environment configuration...', 'info');
+            log(`🔍 Actual URL: ${supabaseUrl || 'MISSING'}`, 'info');
+            log(`🔍 Actual Key: ${supabaseKey ? supabaseKey.slice(0, 20) + '...' : 'MISSING'}`, 'info');
             
             const urlStatus = document.getElementById('url-status');
             const keyStatus = document.getElementById('key-status');
@@ -204,6 +213,9 @@
         window.testConnection = async function() {
             if (!supabase) {
                 log('❌ Cannot test connection - Supabase not configured', 'error');
+                log('🔧 Environment variables detected:', 'info');
+                log(`   VITE_SUPABASE_URL: ${supabaseUrl || 'MISSING'}`, 'info');
+                log(`   VITE_SUPABASE_ANON_KEY: ${supabaseKey ? 'Found' : 'MISSING'}`, 'info');
                 return;
             }
             
@@ -230,9 +242,11 @@
                 } else {
                     connectionStatus.innerHTML = '<div class="text-green-600">✅ Database connection successful!</div>';
                     log('✅ Database connection successful!', 'success');
+                    log(`📊 Found ${data ? data.length : 0} prep lists`, 'info');
                 }
             } catch (err) {
                 log(`❌ Connection test failed: ${err.message}`, 'error');
+                log(`💡 Check if your .env file is in the project root`, 'info');
             }
         };
 
@@ -455,6 +469,7 @@
         // Initialize on load
         window.addEventListener('load', () => {
             log('🚀 Database testing interface loaded', 'info');
+            log(`🔧 Environment check: URL=${!!supabaseUrl}, KEY=${!!supabaseKey}`, 'info');
             window.checkEnvironment();
         });
     </script>
